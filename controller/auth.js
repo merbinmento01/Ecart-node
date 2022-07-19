@@ -1,6 +1,6 @@
 const express = require('express');
 
-const router = express.Router()
+const router = express.Router() 
 
 var { users } = require('../schema/auth_schema')
 
