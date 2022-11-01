@@ -4,9 +4,10 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const router = express.Router() 
+const router = express.Router();
 
-var { users } = require('../schema/auth_schema')
+var { users } = require('../schema/auth_schema');
+var resHandler = require('../utility/responseHandler');
 
 router.get('/list', (req, res) => {
     users.find((err, response) => {
@@ -18,26 +19,36 @@ router.get('/list', (req, res) => {
     })
 });
 
-router.get('/login', (req, res) => {
-    users.findOne({email: req.query.email}, (err, response) => {
-        if (!err) {
-            // generatePassword(response, req.query.password);
-            if(verifyPassword(response, req.query.password)) {
-                const token = jwt.sign({username: req.query.email}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '10m'})
-                res.send({response, accessToken: token, status_code: 200}) 
+router.get('/login', (req, res, next) => {
+    try {
+          users.find(({email: req.query.email}),(err,response) => {
+            if (response.length) {
+                // generatePassword(response, req.query.password);
+                if(verifyPassword(response[0], req.query.password)) {
+                    const token = jwt.sign({username: req.query.email}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '10m'})
+                    resHandler(res,{accessToken: token, status_code: 200, message: "Success"}) 
+                } else {
+                    // return next(new throwError(403,"Invalid Password"));
+                    resHandler(res,{status_code: 403, message: "Invalid Password"})
+                }
             } else {
-                res.send("Incorrect Password");
+                resHandler(res,{data: response, status_code: 200, message:"Email doesn't exist"});
             }
-        } else {
-            res.send("Email doesn't Exist:");
-        }
-    })
+        })
+    } catch(err) {
+        resHandler(res,{data: err, status_code: 200, message:"Something Went Wrong"});
+    }   
 })
 
 function verifyPassword(data, checkPass) {
-    let password = data.password;
-    let isLogin = bcrypt.compareSync(checkPass, password);
-    return isLogin;
+    try{
+        let password = data.password;
+        let isLogin = bcrypt.compareSync(checkPass, password);
+        return isLogin;
+    } catch(err) {
+        return false;
+    }
+    
 }
 
 // function generatePassword(data, password) {
