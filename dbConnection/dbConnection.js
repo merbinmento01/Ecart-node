@@ -19,6 +19,7 @@ const mongodb =  require('mongoose');
 
 var auth = mongodb.createConnection(db_config.auth_url);
 var agency = mongodb.createConnection(db_config.agency_url);
+var chat = mongodb.createConnection(db_config.chat_url);
 
 auth.on('error', console.error.bind(console, 'connection error:'));
 auth.once('open', () => {
@@ -30,4 +31,9 @@ agency.once('open', () => {
   console.log('connected to agencies');
 });
 
-module.exports = {auth, agency};
+chat.on('error', console.error.bind(console, 'connection error:'));
+chat.once('open', () => {
+  console.log('connected to chat');
+});
+
+module.exports = {auth, agency, chat};
